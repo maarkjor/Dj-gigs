@@ -772,12 +772,16 @@ function renderGigForms() {
 
 function formatAmount(val) {
   if (!val && val !== 0) return '';
-  // Strip everything except digits and common separators
+  // Strip everything except digits
   const clean = String(val).replace(/[^0-9]/g, '');
   if (!clean) return '';
   const num = parseInt(clean, 10);
-  // Format as integer with ,00
-  return num.toLocaleString('de-DE') + ',00';
+  if (isNaN(num)) return '';
+  // Manual thousands formatting — no locale dependency
+  const s = String(num);
+  const parts = [];
+  for (let i = s.length; i > 0; i -= 3) parts.unshift(s.slice(Math.max(0, i-3), i));
+  return parts.join('.') + ',00';
 }
 
 function escHtml(s) {
