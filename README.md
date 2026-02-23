@@ -30,12 +30,12 @@ Confirm and tap Add
 How it works
 
 Tap any date to add one or more gigs
-For each gig you can set: venue, working hours, contact, notes, payment status (paid / to be paid) and payment method (cash / bank transfer) and amount
-Choose the gig type yourself — Afternoon, Night, or After Midnight — this sets the color of the dot on the calendar
-Dots appear on each date so you can see at a glance what time slots are taken without opening every day
-Blinking dots mean the gig hasn't been paid yet
-Tap ⚙ COLORS to customize the color for each gig type
-Swipe left or right on the calendar to change month
+For each gig you can set: venue, working hours, contact, notes, payment status (paid / to be paid) and payment method (cash / bank transfer) and amount.
+Choose the gig type yourself — Afternoon, Night, or After Midnight — this sets the color of the dot on the calendar.
+Dots appear on each date so you can see at a glance what time slots are taken without opening every day.
+Blinking dots mean the gig hasn't been paid yet.
+Tap ⚙ COLORS to customize the color for each gig type.
+Swipe left or right on the calendar to change month.
 
 
 Sharing with other DJs
