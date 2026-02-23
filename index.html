@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gig Book">
+<meta name="theme-color" content="#0a0a0f">
+<title>GIG BOOK — DJ Calendar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --muted: #666680;
+    --accent: #c8ff00;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; overscroll-behavior: none; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overflow-x: hidden;
+    padding-top: var(--safe-top);
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  header {
+    padding: 14px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.9rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: 0 0 24px rgba(200,255,0,0.4);
+    line-height: 1;
+  }
+
+  .logo span {
+    color: var(--muted);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    display: block;
+    margin-top: 1px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .btn-settings {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-settings:active { background: var(--border); }
+
+  .calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 10px;
+  }
+
+  .month-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 3px;
+  }
+
+  .nav-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .nav-btn:active { background: var(--border); }
+
+  .legend {
+    padding: 0 20px 10px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .calendar-wrap {
+    padding: 0 12px calc(var(--safe-bottom) + 20px);
+    touch-action: pan-y;
+  }
+
+  .day-headers {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-bottom: 3px;
+  }
+
+  .day-header {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    color: var(--muted);
+    padding: 6px 0;
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+
+  .cal-day {
+    min-height: 52px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 5px 5px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  .cal-day:active { background: var(--surface2); }
+  .cal-day.empty { background: transparent; border-color: transparent; pointer-events: none; }
+  .cal-day.today { border-color: rgba(200,255,0,0.35); }
+  .cal-day.today .day-num { color: var(--accent); }
+
+  .day-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1;
+  }
+
+  .gig-slots {
+    position: absolute;
+    top: 6px; right: 5px; bottom: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 9px;
+  }
+
+  .gig-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .gig-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  @keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.12; }
+  }
+  .gig-dot.unpaid { animation: blink-dot 1.4s ease-in-out infinite; }
+
+  /* ── BOTTOM SHEET ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px 22px 0 0;
+    width: 100%;
+    max-width: 600px;
+    max-height: 92vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 20px calc(var(--safe-bottom) + 16px);
+    -webkit-overflow-scrolling: touch;
+    animation: slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(60px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto 16px;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+
+  .modal-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-bottom: 18px;
+    letter-spacing: 1px;
+  }
+
+  .modal-close {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .modal-close:active { background: var(--border); }
+
+  .gig-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .gig-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .gig-type-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--bg);
+    border: 1px solid;
+  }
+
+  .delete-gig {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    min-width: 44px; min-height: 44px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .delete-gig:active { color: #ff4444; }
+
+  label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type=text], textarea, select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input:focus, textarea:focus { border-color: rgba(200,255,0,0.5); }
+  textarea { resize: vertical; min-height: 70px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .toggle-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    min-height: 48px;
+    padding: 10px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .toggle-btn:active { opacity: 0.7; }
+  .toggle-btn.active-paid  { background: rgba(200,255,0,0.12); border-color: var(--accent); color: var(--accent); }
+  .toggle-btn.active-topay { background: rgba(255,80,80,0.12);  border-color: #ff5050; color: #ff5050; }
+  .toggle-btn.active-cash  { background: rgba(255,149,0,0.12); border-color: #ff9500; color: #ff9500; }
+  .toggle-btn.active-bank  { background: rgba(0,212,255,0.12); border-color: #00d4ff; color: #00d4ff; }
+
+  .btn-add-gig {
+    width: 100%;
+    min-height: 52px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+  .btn-add-gig:active { border-color: var(--accent); color: var(--accent); }
+
+  .btn-save {
+    width: 100%;
+    min-height: 56px;
+    background: var(--accent);
+    border: none;
+    color: #000;
+    border-radius: 14px;
+    cursor: pointer;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    margin-top: 14px;
+    box-shadow: 0 0 20px rgba(200,255,0,0.2);
+  }
+  .btn-save:active { opacity: 0.82; }
+
+  .settings-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px 22px 0 0;
+    width: 100%;
+    max-width: 600px;
+    padding: 0 20px calc(var(--safe-bottom) + 20px);
+    animation: slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
+  }
+
+  .settings-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+
+  .color-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 16px;
+    min-height: 44px;
+  }
+
+  .color-setting-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    flex: 1;
+    line-height: 1.5;
+  }
+
+  input[type=color] {
+    width: 52px; height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    cursor: pointer;
+    padding: 3px;
+    -webkit-appearance: none;
+    flex-shrink: 0;
+  }
+
+  .cutoff-note {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    margin-top: 14px;
+    padding: 14px;
+    background: var(--bg);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    line-height: 1.7;
+    margin-bottom: 6px;
+  }
+
+  .no-gigs {
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 16px 0 20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    GIG BOOK
+    <span>DJ CALENDAR</span>
+  </div>
+  <button class="btn-settings" onclick="openSettings()">⚙ COLORS</button>
+</header>
+
+<div class="calendar-nav">
+  <button class="nav-btn" onclick="prevMonth()">‹</button>
+  <div class="month-label" id="monthLabel"></div>
+  <button class="nav-btn" onclick="nextMonth()">›</button>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" id="legend-afternoon"></div>AFTERNOON</div>
+  <div class="legend-item"><div class="legend-dot" id="legend-night"></div>NIGHT</div>
+  <div class="legend-item"><div class="legend-dot" id="legend-aftermidnight"></div>AFTER MIDNIGHT</div>
+</div>
+
+<div class="calendar-wrap" id="calendarWrap">
+  <div class="day-headers">
+    <div class="day-header">M</div>
+    <div class="day-header">T</div>
+    <div class="day-header">W</div>
+    <div class="day-header">T</div>
+    <div class="day-header">F</div>
+    <div class="day-header">S</div>
+    <div class="day-header">S</div>
+  </div>
+  <div class="calendar-grid" id="calGrid"></div>
+</div>
+
+<!-- Day bottom sheet -->
+<div class="modal-overlay" id="dayModal">
+  <div class="modal" id="dayModalInner">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">GIGS</div>
+        <div class="modal-date" id="modalDateLabel"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="gigsContainer"></div>
+    <button class="btn-add-gig" onclick="addGigForm()">+ ADD GIG</button>
+    <button class="btn-save" onclick="saveDay()">SAVE DAY</button>
+  </div>
+</div>
+
+<!-- Settings bottom sheet -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="settings-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header" style="margin-bottom:16px">
+      <div class="settings-title">COLORS</div>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div class="color-setting-row">
+      <div class="color-setting-label">🌅 AFTERNOON GIG</div>
+      <input type="color" id="colorAfternoon" oninput="updateColors()">
+    </div>
+    <div class="color-setting-row">
+      <div class="color-setting-label">🌙 NIGHT GIG</div>
+      <input type="color" id="colorNight" oninput="updateColors()">
+    </div>
+    <div class="color-setting-row">
+      <div class="color-setting-label">🌃 AFTER MIDNIGHT</div>
+      <input type="color" id="colorAfterMidnight" oninput="updateColors()">
+    </div>
+    <div class="cutoff-note">
+      ⚡ You choose the gig type yourself. Colors update instantly on the calendar.
+    </div>
+    <button class="btn-save" onclick="closeSettings()">DONE</button>
+  </div>
+</div>
+
+<script>
+let currentYear, currentMonth;
+let selectedDateKey = null;
+let gigData = {};
+let userColors = { afternoon: '#ff9500', night: '#b44fff', aftermidnight: '#00d4ff' };
+
+// ── SWIPE TO CHANGE MONTH ────────────────────────────────
+let touchStartX = 0, touchStartY = 0;
+document.getElementById('calendarWrap').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+document.getElementById('calendarWrap').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+    if (dx < 0) nextMonth(); else prevMonth();
+  }
+}, { passive: true });
+
+// ── INIT ─────────────────────────────────────────────────
+function init() {
+  const now = new Date();
+  currentYear = now.getFullYear();
+  currentMonth = now.getMonth();
+  loadData(); loadColors(); renderCalendar(); updateLegend();
+}
+
+// Safe storage — falls back to memory if localStorage blocked (file:// on iOS)
+const store = (() => {
+  try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); return localStorage; }
+  catch(e) { const m = {}; return { getItem: k => m[k]||null, setItem: (k,v) => m[k]=v, removeItem: k => delete m[k] }; }
+})();
+
+function loadData() {
+  try { gigData = JSON.parse(store.getItem('djGigData') || '{}'); } catch(e) { gigData = {}; }
+}
+function saveData() { try { store.setItem('djGigData', JSON.stringify(gigData)); } catch(e) {} }
+
+function loadColors() {
+  try {
+    const s = JSON.parse(store.getItem('djColors') || '{}');
+    if (s.afternoon) userColors.afternoon = s.afternoon;
+    if (s.night) userColors.night = s.night;
+    if (s.aftermidnight) userColors.aftermidnight = s.aftermidnight;
+  } catch(e) {}
+  document.getElementById('colorAfternoon').value = userColors.afternoon;
+  document.getElementById('colorNight').value = userColors.night;
+  document.getElementById('colorAfterMidnight').value = userColors.aftermidnight;
+}
+function saveColors() { store.setItem('djColors', JSON.stringify(userColors)); }
+
+function colorForType(t) {
+  if (t === 'afternoon') return userColors.afternoon;
+  if (t === 'aftermidnight') return userColors.aftermidnight;
+  return userColors.night;
+}
+function getGigsForDisplay(k) { return gigData[k] || []; }
+
+// ── CALENDAR ─────────────────────────────────────────────
+function renderCalendar() {
+  const label = new Date(currentYear, currentMonth, 1)
+    .toLocaleString('en-US', { month:'long', year:'numeric' }).toUpperCase();
+  document.getElementById('monthLabel').textContent = label;
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const offset = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const today = new Date();
+
+  for (let i = 0; i < offset; i++) {
+    const e = document.createElement('div');
+    e.className = 'cal-day empty';
+    grid.appendChild(e);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateKey = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = today.getFullYear()===currentYear && today.getMonth()===currentMonth && today.getDate()===d;
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (isToday ? ' today' : '');
+    cell.addEventListener('click', () => openDay(dateKey));
+
+    const num = document.createElement('div');
+    num.className = 'day-num';
+    num.textContent = d;
+    cell.appendChild(num);
+
+    const gigs = getGigsForDisplay(dateKey);
+    if (gigs.length > 0) {
+      const slotsEl = document.createElement('div');
+      slotsEl.className = 'gig-slots';
+      ['afternoon','night','aftermidnight'].forEach(slotType => {
+        const slotGigs = gigs.filter(g => (g.type||'night') === slotType);
+        const slotEl = document.createElement('div');
+        slotEl.className = 'gig-slot';
+        slotGigs.forEach(g => {
+          const c = colorForType(slotType);
+          const dot = document.createElement('div');
+          dot.className = 'gig-dot' + (g.paid==='topay' ? ' unpaid' : '');
+          dot.style.background = c;
+          dot.style.boxShadow = `0 0 5px ${c}90`;
+          slotEl.appendChild(dot);
+        });
+        slotsEl.appendChild(slotEl);
+      });
+      cell.appendChild(slotsEl);
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function prevMonth() {
+  currentMonth--;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+function nextMonth() {
+  currentMonth++;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  renderCalendar();
+}
+
+// ── DAY MODAL ────────────────────────────────────────────
+let editingGigs = [];
+
+function openDay(dateKey) {
+  selectedDateKey = dateKey;
+  const d = new Date(dateKey + 'T12:00:00');
+  const label = d.toLocaleString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }).toUpperCase();
+  document.getElementById('modalDateLabel').textContent = label;
+  editingGigs = JSON.parse(JSON.stringify(gigData[dateKey] || []));
+  renderGigForms();
+  document.getElementById('dayModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('dayModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderGigForms() {
+  const container = document.getElementById('gigsContainer');
+  container.innerHTML = '';
+  if (editingGigs.length === 0) {
+    container.innerHTML = '<div class="no-gigs">NO GIGS YET — TAP + ADD GIG</div>';
+    return;
+  }
+  editingGigs.forEach((gig, idx) => {
+    const type = gig.type || 'night';
+    const tc = colorForType(type);
+    const typeLabel = type==='afternoon' ? '🌅 AFTERNOON' : type==='night' ? '🌙 NIGHT' : '🌃 AFTER MIDNIGHT';
+    const afS = type==='afternoon'     ? `background:${userColors.afternoon}22;border-color:${userColors.afternoon};color:${userColors.afternoon}` : '';
+    const ngS = type==='night'         ? `background:${userColors.night}22;border-color:${userColors.night};color:${userColors.night}` : '';
+    const amS = type==='aftermidnight' ? `background:${userColors.aftermidnight}22;border-color:${userColors.aftermidnight};color:${userColors.aftermidnight}` : '';
+
+    const card = document.createElement('div');
+    card.className = 'gig-card';
+    card.style.borderColor = tc + '50';
+    card.innerHTML = `
+      <div class="gig-card-header">
+        <div class="gig-type-badge" style="color:${tc};border-color:${tc}">${typeLabel}</div>
+        <button class="delete-gig" onclick="deleteGig(${idx})">🗑</button>
+      </div>
+      <label>GIG TYPE</label>
+      <div class="toggle-row" style="margin-bottom:14px">
+        <button class="toggle-btn" style="${afS}" onclick="setGigType(${idx},'afternoon')">🌅<br>AFTERNOON</button>
+        <button class="toggle-btn" style="${ngS}" onclick="setGigType(${idx},'night')">🌙<br>NIGHT</button>
+        <button class="toggle-btn" style="${amS}" onclick="setGigType(${idx},'aftermidnight')">🌃<br>AFTER<br>MIDNIGHT</button>
+      </div>
+      <label>VENUE</label>
+      <input type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Club name / venue" value="${escHtml(gig.venue||'')}" oninput="editingGigs[${idx}].venue=this.value">
+      <div class="form-row">
+        <div>
+          <label>START TIME</label>
+          <input type="text" inputmode="numeric" placeholder="e.g. 22:00" value="${escHtml(gig.startTime||'')}" oninput="editingGigs[${idx}].startTime=this.value">
+        </div>
+        <div>
+          <label>END TIME</label>
+          <input type="text" inputmode="numeric" placeholder="e.g. 02:00" value="${escHtml(gig.endTime||'')}" oninput="editingGigs[${idx}].endTime=this.value">
+        </div>
+      </div>
+      <label>CONTACT / BOOKER</label>
+      <input type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Name or number" value="${escHtml(gig.contact||'')}" oninput="editingGigs[${idx}].contact=this.value">
+      <label>NOTES</label>
+      <textarea autocorrect="off" spellcheck="false" placeholder="Set requirements, dresscode, fee..." oninput="editingGigs[${idx}].note=this.value">${escHtml(gig.note||'')}</textarea>
+      <label>PAYMENT STATUS</label>
+      <div class="toggle-row">
+        <button class="toggle-btn ${gig.paid==='paid'?'active-paid':''}" onclick="setToggle(${idx},'paid','paid')">✓ PAID</button>
+        <button class="toggle-btn ${gig.paid==='topay'?'active-topay':''}" onclick="setToggle(${idx},'paid','topay')">⏳ TO BE PAID</button>
+      </div>
+      <label>PAYMENT METHOD</label>
+      <div class="toggle-row">
+        <button class="toggle-btn ${gig.payMethod==='cash'?'active-cash':''}" onclick="setToggle(${idx},'payMethod','cash')">💵 CASH</button>
+        <button class="toggle-btn ${gig.payMethod==='bank'?'active-bank':''}" onclick="setToggle(${idx},'payMethod','bank')">🏦 BANK</button>
+      </div>
+      <label>AMOUNT</label>
+      <input type="text" inputmode="numeric" placeholder="0,00" value="${formatAmount(gig.amount||'')}" oninput="editingGigs[${idx}].amount=this.value" onblur="this.value=formatAmount(this.value);editingGigs[${idx}].amount=this.value" style="font-size:1.2rem;font-family:'Space Mono',monospace;letter-spacing:1px;">
+    `;
+    container.appendChild(card);
+  });
+}
+
+function formatAmount(val) {
+  if (!val && val !== 0) return '';
+  // Strip everything except digits and common separators
+  const clean = String(val).replace(/[^0-9]/g, '');
+  if (!clean) return '';
+  const num = parseInt(clean, 10);
+  // Format as integer with ,00
+  return num.toLocaleString('de-DE') + ',00';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function setGigType(idx, type) { editingGigs[idx].type = type; renderGigForms(); }
+function setToggle(idx, field, val) { editingGigs[idx][field] = val; renderGigForms(); }
+function deleteGig(idx) { editingGigs.splice(idx, 1); renderGigForms(); }
+
+function addGigForm() {
+  editingGigs.push({ venue:'', startTime:'', endTime:'', contact:'', note:'', paid:'', payMethod:'', type:'night', amount:'' });
+  renderGigForms();
+  const modal = document.getElementById('dayModalInner');
+  setTimeout(() => modal.scrollTop = modal.scrollHeight, 60);
+}
+
+function saveDay() {
+  if (editingGigs.length === 0) delete gigData[selectedDateKey];
+  else gigData[selectedDateKey] = editingGigs;
+  saveData(); renderCalendar(); closeModal();
+}
+
+// ── SETTINGS ─────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('settingsModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function updateColors() {
+  userColors.afternoon    = document.getElementById('colorAfternoon').value;
+  userColors.night        = document.getElementById('colorNight').value;
+  userColors.aftermidnight= document.getElementById('colorAfterMidnight').value;
+  saveColors(); updateLegend(); renderCalendar();
+}
+function updateLegend() {
+  document.getElementById('legend-afternoon').style.background    = userColors.afternoon;
+  document.getElementById('legend-night').style.background        = userColors.night;
+  document.getElementById('legend-aftermidnight').style.background= userColors.aftermidnight;
+}
+
+document.getElementById('dayModal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+document.getElementById('settingsModal').addEventListener('click', function(e) { if(e.target===this) closeSettings(); });
+
+init();
+</script>
+</body>
+</html>
